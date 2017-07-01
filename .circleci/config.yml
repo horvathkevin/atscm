@@ -1,0 +1,39 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/node:6
+    working_directory: /home/circleci/ci
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Run atvise server
+          command: |
+            mkdir -p ../atserver && cd ../atserver
+            echo $ATSERVER_LICENSE | base64 --decode --ignore-garbage > atserver.lic
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker run -d --mac-address $ATSERVER_MAC -p "4840:4840" -v "$(pwd):/etc/atvise" lukashechenberger/test-atvise-server:latest
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Install Dependencies
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+
+      # Tests
+      - run:
+          name: Prepare for tests
+          command: mkdir -p ../test-results
+      - run:
+          name: Lint source files
+          command: $(npm bin)/eslint -f junit src > ../test-results/eslint.xml
+
+      - store_artifacts:
+          path: ../test-results
+          prefix: tests
+
+      # Deployment

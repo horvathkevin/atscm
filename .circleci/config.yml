@@ -14,6 +14,7 @@ jobs:
             echo $ATSERVER_LICENSE | base64 --decode --ignore-garbage > atserver.lic
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker run -d --mac-address $ATSERVER_MAC -p "4840:4840" -v "$(pwd):/etc/atvise" lukashechenberger/test-atvise-server:latest
+            cd /home/circleci/ci
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
@@ -32,8 +33,7 @@ jobs:
           name: Lint source files
           command: $(npm bin)/eslint -f junit src > ../test-results/eslint.xml
 
-      - store_artifacts:
+      - store_test_results:
           path: ../test-results
-          prefix: tests
 
       # Deployment

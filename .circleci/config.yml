@@ -33,6 +33,13 @@ jobs:
           name: Lint source files
           command: $(npm bin)/eslint -f junit src > ../test-results/eslint.xml
 
+      - run:
+          name: Run unit tests
+          command: NODE_ENV=test ATSCM_PROJECT__HOST=localhost ATSCM_PROJECT__PORT__OPC=4840 $(npm bin)/nyc npm test -- --reporter mocha-circleci-reporter
+      - run:
+          name: Check test coverage
+          command: $(npm bin)/nyc check-coverage --statements 90 --branches 90 --functions 90 --lines 90
+
       - store_test_results:
           path: ../test-results
 
